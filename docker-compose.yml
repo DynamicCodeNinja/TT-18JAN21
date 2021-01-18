@@ -1,0 +1,25 @@
+version: '3'
+
+services:
+  mysql:
+    image: runbooksolutions/site-cicd-mysql:latest
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+
+  workspace:
+    image: runbooksolutions/site-cicd-workspace:latest
+    volumes:
+      - ${PWD}:/opt
+    command: /bin/sh -c "while sleep 1000; do :; done"
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    links:
+      - mysql
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+    restart: always
+    ports:
+      - "8081:80"
