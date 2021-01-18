@@ -1,62 +1,40 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400"></a></p>
+# TT-18JAN21
+Simple implementation of T/T multi-database setup, using livewire to fetch "tenant" models without any automatic identification of the tenant.
+I.E. Accessing tenant's data from an administrator panel.
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Stream: https://www.twitch.tv/videos/878566649
 
-## About Laravel
+# Models
+1) `Company` This model is our "Tenant"; every company will get their own database.
+2) `Post` This model belongs to the "Tenant". It is stored on the "tenant" database.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+# Listeners & New Providers for Tenancy
+Everything in the `app\Tenancy` folder is directly related to the setup of Tenancy.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+# Livewire
+I've never used livewire before; it seems simple enough. With that said the 4 key files are as follows:
+1) `app\Http\Livewire\Companies` This handles the listing of companies
+2) `resources\views\livewire\companies` This is displaying the list of companies, and the link (displaying a button) to view the posts for a company
+1) `app\Http\Livewire\Posts` This handles the listing of posts for a specific company
+2) `resources\views\livewire\posts` This is displaying the list of posts for a company, and includes a select to choose what tenant to be displayed
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
-## Learning Laravel
+# Notes:
+This setup uses 2 different database users excluding any created for tenants. As such there are two mysql connections; and the admin connection is set in the `Company` model.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+`rbs_user` only has access to the `rbs_database`, and has no additional permissions outside that database.
+`rbs_admin` is an administrator, that can create additional users, grant privilages, and access any database.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 1500 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```sql
+CREATE USER 'rbs_admin'@'%' IDENTIFIED BY 'rbs_admin_password';
+GRANT ALL PRIVILEGES ON * . * TO 'rbs_admin'@'%' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
 
-## Laravel Sponsors
+CREATE DATABASE rbs_database;
+CREATE USER 'rbs_user'@'%' IDENTIFIED BY 'rbs_user_password';
+GRANT ALL PRIVILEGES ON rbs_database . * TO 'rbs_user'@'%';
+FLUSH PRIVILEGES;
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
-
-### Premium Partners
-
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/)**
-- **[OP.GG](https://op.gg)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Warnings:
+This was simply done as a POC to attempt to find any bugs located in the T/T flow. Do not use this code in production, and only as a reference.
